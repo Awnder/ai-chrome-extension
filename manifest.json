@@ -9,8 +9,16 @@
     "permissions": [
         "tabs",
         "activeTab",
-        "webNavigation"
+        "webNavigation",
+        "scripting",
+        "storage"
     ],
+    "host_permissions": [
+        "<all_urls>"
+    ],
+    "background": {
+        "service_worker": "scripts/service-worker.js"
+    },
     "content_scripts": [
         {
             "matches": ["<all_urls>"],
