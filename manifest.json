@@ -1,12 +1,15 @@
 {
     "manifest_version": 3,
     "name": "AI Chrome Extension",
-    "version": "1.0",
-    "description": "Extension that gives AI suggestions.",
-    "action": {
-        "default_popup": "popup/index.html"
+    "version": "1.0.0",
+    "description": "An AI Chrome Extension",
+    "action": { 
+        "default_popup": "popup.html" 
     },
+    "key": "eibjghidofflecfmapaljdepegdnhllk",
+    "trial_tokens": ["ArdBnRv6YxbKJK8wimtp/ib6nN3FcEWXUxFnxSaIzgWT9Y/MDHVQ33a7gtsH3XhuOssBaiQ2g19SA3H7amGvlQUAAAB4eyJvcmlnaW4iOiJjaHJvbWUtZXh0ZW5zaW9uOi8vZWliamdoaWRvZmZsZWNmbWFwYWxqZGVwZWdkbmhsbGsiLCJmZWF0dXJlIjoiQUlQcm9tcHRBUElGb3JFeHRlbnNpb24iLCJleHBpcnkiOjE3NjA0ODYzOTl9"],
     "permissions": [
+        "aiLanguageModelOriginTrial",
         "tabs",
         "activeTab",
         "webNavigation",
@@ -17,7 +20,7 @@
         "<all_urls>"
     ],
     "background": {
-        "service_worker": "scripts/service-worker.js"
+        "service_worker": "src/service-worker.js"
     },
     "content_scripts": [
         {
