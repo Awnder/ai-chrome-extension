@@ -55,7 +55,7 @@ LLM Output: "refreshed and ready to start the day."
 //     return null;
 // }
 
-API_KEY = "AIzaSyD2PtfCJ8EoygZ_risepMfEjSjJjAmReU0"
+const API_KEY = "AIzaSyD2PtfCJ8EoygZ_risepMfEjSjJjAmReU0"
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${API_KEY}`;
 
 async function callGemini(content) {
@@ -73,8 +73,7 @@ async function callGemini(content) {
         });
 
         const data = await response.json();
-        console.log(data);
-        
+        console.log("data from Gemini API:", data);        
         if (data && data.candidates) {
             return data.candidates[0].content.parts[0].text;
         } else {
@@ -93,7 +92,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     callGemini(message.value)
       .then((result) => {
-        console.log("result", result);
+        console.log("generated suggestion:", result);
         sendResponse({ success: true, result }); // Send result with response
       })
       .catch((error) => {
