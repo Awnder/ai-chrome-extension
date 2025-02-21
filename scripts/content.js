@@ -1,19 +1,52 @@
-document.addEventListener("DOMContentLoaded", function () {
-    const metaTags = document.getElementsByTagName("meta");
-    console.log(metaTags);
-    title = document.getElementsByTagName("title");
-    console.log(title[0]);
+let currentTextarea = null;
+let currentHandler = null;
 
-    chrome.runtime.sendMessage({
-        action: "getMetaSummary",
-        content: metaTags,
-    });
-});
-
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-    if (request.message === "pageSummary") {
-        console.log(request.summary);
+// Detect when a textarea gains focus
+document.addEventListener('focusin', (event) => {
+  if (event.target.tagName === 'TEXTAREA') {
+    // Clean up previous listener (if any)
+    if (currentTextarea && currentHandler) {
+      currentTextarea.removeEventListener('input', currentHandler);
+      currentHandler = null;
     }
+
+    currentTextarea = event.target;
+    currentHandler = setupTextareaListener(currentTextarea);
+  }
 });
 
-//https://www.youtube.com/watch?v=rHU5GwsFdsw&ab_channel=RustyZone
+// Detect when a textarea loses focus
+document.addEventListener('focusout', (event) => {
+  if (event.target === currentTextarea) {
+    // Clean up listener when focus is lost
+    if (currentTextarea && currentHandler) {
+      currentTextarea.removeEventListener('input', currentHandler);
+      currentHandler = null;
+    }
+    currentTextarea = null;
+  }
+});
+
+// Listen for input events with debouncing
+function setupTextareaListener(textarea) {
+  let debounceTimeout;
+
+  const handleInput = () => {
+    // Clear any pending timeout
+    clearTimeout(debounceTimeout);
+
+    // Set new timeout to fire after 2 seconds of inactivity
+    debounceTimeout = setTimeout(() => {
+      // Only send if the textarea is still focused
+      if (document.activeElement === textarea) {
+        chrome.runtime.sendMessage({
+          type: 'TEXTAREA_UPDATE',
+          value: textarea.value
+        });
+      }
+    }, 2000);
+  };
+
+  textarea.addEventListener('input', handleInput);
+  return handleInput; // Return the handler for cleanup
+}
