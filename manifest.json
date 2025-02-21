@@ -1,35 +1,35 @@
 {
-  "manifest_version": 3,
-  "name": "AI Chrome Extension",
-  "version": "1.0.0",
-  "description": "An AI Chrome Extension",
-  "action": {
-    "default_popup": "popup/index.html"
-  },
-  "key": "eibjghidofflecfmapaljdepegdnhllk",
-  "trial_tokens": [
-    "ArdBnRv6YxbKJK8wimtp/ib6nN3FcEWXUxFnxSaIzgWT9Y/MDHVQ33a7gtsH3XhuOssBaiQ2g19SA3H7amGvlQUAAAB4eyJvcmlnaW4iOiJjaHJvbWUtZXh0ZW5zaW9uOi8vZWliamdoaWRvZmZsZWNmbWFwYWxqZGVwZWdkbmhsbGsiLCJmZWF0dXJlIjoiQUlQcm9tcHRBUElGb3JFeHRlbnNpb24iLCJleHBpcnkiOjE3NjA0ODYzOTl9"
-  ],
-  "permissions": [
-    "aiLanguageModelOriginTrial",
-    "tabs",
-    "activeTab",
-    "webNavigation",
-    "scripting",
-    "storage"
-  ],
-  "host_permissions": ["<all_urls>"],
-  "background": {
-    "service_worker": "scripts/service-worker.js",
-    "type": "module"
-  },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["scripts/content.js"]
+    "manifest_version": 3,
+    "name": "AI Chrome Extension",
+    "version": "1.0.0",
+    "description": "An AI Chrome Extension",
+    "action": { 
+        "default_popup": "popup/index.html" 
+    },
+    "key": "eibjghidofflecfmapaljdepegdnhllk",
+    "trial_tokens": ["ArdBnRv6YxbKJK8wimtp/ib6nN3FcEWXUxFnxSaIzgWT9Y/MDHVQ33a7gtsH3XhuOssBaiQ2g19SA3H7amGvlQUAAAB4eyJvcmlnaW4iOiJjaHJvbWUtZXh0ZW5zaW9uOi8vZWliamdoaWRvZmZsZWNmbWFwYWxqZGVwZWdkbmhsbGsiLCJmZWF0dXJlIjoiQUlQcm9tcHRBUElGb3JFeHRlbnNpb24iLCJleHBpcnkiOjE3NjA0ODYzOTl9"],
+    "permissions": [
+        "aiLanguageModelOriginTrial",
+        "tabs",
+        "activeTab",
+        "webNavigation",
+        "scripting",
+        "storage"
+    ],
+    "host_permissions": [
+    "<all_urls>"
+    ],
+    "background": {
+        "service_worker": "scripts/service-worker.js",
+        "type": "module"
+    },
+    "content_scripts": [
+        {
+            "matches": ["<all_urls>"],
+            "js": ["scripts/content.js"]
+        }
+    ],
+    "content_security_policy": {
+        "extension_pages": "script-src 'self'; object-src 'self';"
     }
-  ],
-  "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self';"
-  }
 }
