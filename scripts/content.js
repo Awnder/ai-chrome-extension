@@ -155,7 +155,7 @@ function setupTextareaListener(textarea) {
                 currentTextarea.suggestionOverlay.innerHTML
               );
 
-              adjustTextHeights(currentTextarea, suggestion);
+              adjustTextHeights(currentTextarea, suggestion); // adjusting height to fit suggestion
 
             } else {
               console.error(
@@ -175,7 +175,26 @@ function setupTextareaListener(textarea) {
 
 // Add suggestion when user presses Tab key
 document.addEventListener("keydown", (event) => {
-  adjustTextHeights(currentTextarea);
+  // Get the current text from the textarea. If it is contentEditable, use innerText instead of value.
+  let currentText =
+  currentTextarea && currentTextarea.isContentEditable
+    ? currentTextarea.innerText
+    : currentTextarea.value;
+  
+  let superKey = "⌘";
+  if (!/(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
+      superKey = "Ctrl";
+  }
+  
+  // Allow superKey keybinds to go through
+  if (event.key === superKey && (event.ctrlKey || event.metaKey)) {
+    return;
+  }
+  
+  if (currentTextarea.suggestionOverlay && (event.key === "Escape" || event.key === "Enter" || event.key === "Backspace")) {
+    currentTextarea.suggestionOverlay.innerHTML = "";
+    adjustTextHeights(currentTextarea);
+  }
 
   if (
     event.key === "Tab" &&
@@ -183,12 +202,6 @@ document.addEventListener("keydown", (event) => {
     currentTextarea.suggestionOverlay
   ) {
     // Get the suggestion from the overlay.
-    // Get the current text from the textarea. If it is contentEditable, use innerText instead of value.
-    let currentText =
-      currentTextarea && currentTextarea.isContentEditable
-        ? currentTextarea.innerText
-        : currentTextarea.value;
-
     let ghostSpan =
       currentTextarea.suggestionOverlay.querySelector(".ghost-text");
     if (ghostSpan && ghostSpan.textContent.trim().length > 0) {
@@ -202,12 +215,13 @@ document.addEventListener("keydown", (event) => {
       // Update the overlay to reflect the new value (and clear the suggestion).
       currentTextarea.suggestionOverlay.innerHTML = escapeHTML(currentText);
       moveCursorToEnd(currentTextarea);
-      adjustTextHeights(currentTextarea); // check again after tab completion
+      adjustTextHeights(currentTextarea);
     }
   }
 });
 
 /// OTHER FUNCTIONS ///
+
 function moveCursorToEnd(textarea) {
   textarea.focus();
 
@@ -244,7 +258,8 @@ function adjustTextHeights(textarea, suggestion="") {
   if (suggestion !== "") {
     textarea.querySelector(".temp-text").remove();
   }
-  moveCursorToEnd(currentTextarea);
+
+  moveCursorToEnd(currentTextarea); // after suggestions are deleted or fulfilled
 }
 
 function escapeHTML(str) {
