@@ -1,16 +1,32 @@
 let currentTextarea = null;
 let currentHandler = null;
 
+/// MAIN EVENT LISTENERS ///
+
 // Detect when a textarea gains focus
 document.addEventListener("focusin", (event) => {
   const target = event.target;
-  if (target && (target.tagName === "TEXTAREA" || target.tagName === "INPUT" || target.isContentEditable)) {
+
+  if (!(target instanceof HTMLElement)) {
+    console.error("Target is not an HTMLElement:", target);
+    return;
+  }
+
+  if (
+    target &&
+    (target.tagName === "TEXTAREA" ||
+      target.tagName === "INPUT" ||
+      target.isContentEditable)
+  ) {
     currentTextarea = target;
 
     currentHandler = setupTextareaListener(currentTextarea);
 
-    if (!(target instanceof HTMLElement)) {
-      console.error("Target is not an HTMLElement:", target);
+    if (
+      target.tagName === "INPUT" &&
+      (target.type === "email" || target.type === "password")
+    ) {
+      console.log("Skipping input type for privacy:", target.type);
       return;
     }
 
@@ -22,7 +38,7 @@ document.addEventListener("focusin", (event) => {
       container.style.display = "inline-block";
       container.style.width = `${target.offsetWidth}px`; // Match textarea width
       container.style.height = `${target.offsetHeight}px`; // Match textarea height
-
+      
       // Insert container and move textarea inside
       target.parentElement.insertBefore(container, target);
       container.appendChild(target);
@@ -33,24 +49,19 @@ document.addEventListener("focusin", (event) => {
 
       // Copy necessary styles from the textarea
       const computed = window.getComputedStyle(target);
+      // Copy all styles from computed to suggestionOverlay dynamically
+      for (let property of computed) {
+        suggestionOverlay.style[property] = computed.getPropertyValue(property);
+      }
+      // then assign specific styles for suggestionOverlay
       Object.assign(suggestionOverlay.style, {
         position: "absolute",
-        top: `${target.offsetTop + 1}px`,
+        top: `${target.offsetTop}px`,
         left: `${target.offsetLeft}px`,
-        width: "98%",
-        height: "98%",
-        color: computed.getPropertyValue("background-color"), 
-        backgroundColor: computed.getPropertyValue("background-color"),
-        borderColor: computed.getPropertyValue("border-color"),
+        width: "100%",
+        height: "100%",
         pointerEvents: "none", // Allow text input
-        fontFamily: computed.fontFamily,
-        fontSize: computed.fontSize,
-        lineHeight: computed.lineHeight,
-        whiteSpace: "pre-wrap",
-        wordWrap: "break-word",
-        overflow: "hidden",
-        padding: computed.padding,
-        zIndex: "1" // Ensure overlay stays behind text
+        zIndex: "0", // Ensure overlay stays behind text
       });
 
       container.appendChild(suggestionOverlay);
@@ -59,10 +70,7 @@ document.addEventListener("focusin", (event) => {
       // Match textarea background to prevent double text effect
       target.style.background = "transparent";
       target.style.position = "relative";
-      target.style.zIndex = "2"; // Ensure input is above the overlay
-
-      suggestionOverlay.style.zIndex = "1"; // Ensure overlay stays behind text
-      suggestionOverlay.style.overflow = "hidden"; // Prevent unwanted scrolling
+      target.style.zIndex = "1"; // Ensure input is above the overlay
 
       // Clear overlay text whenever the user starts typing
       target.addEventListener("focus", () => {
@@ -86,12 +94,6 @@ document.addEventListener("focusout", (event) => {
   }
 });
 
-function escapeHTML(str) {
-  var div = document.createElement("div");
-  div.appendChild(document.createTextNode(str));
-  return div.innerHTML;
-}
-
 // Listen for input events with debouncing
 function setupTextareaListener(textarea) {
   let debounceTimeout;
@@ -100,18 +102,22 @@ function setupTextareaListener(textarea) {
     // Clear any pending timeout
     clearTimeout(debounceTimeout);
 
+    // Clear the suggestion overlay when the user starts typing
+    currentTextarea.suggestionOverlay.innerHTML = "";
+
     // Set new timeout to fire after 2 seconds of inactivity
     debounceTimeout = setTimeout(() => {
       // Only send if the textarea is still focused
       if (document.activeElement === textarea) {
-
-        // contentEditable divs don't have value, so need to use innerText        
-        let currentText = currentTextarea.isContentEditable ? currentTextarea.innerText : currentTextarea.value;
+        // contentEditable divs don't have value, so need to use innerText
+        let currentText =
+          currentTextarea && currentTextarea.isContentEditable
+            ? currentTextarea.innerText
+            : currentTextarea.value;
 
         // Only send if the textarea has more than 10 characters
         if (currentTextarea && currentText.trim().length <= 10) {
-          console.log('less than or equal to 10 characters so not generating');
-          currentTextarea.suggestionOverlay.innerHTML = "";
+          console.log("less than or equal to 10 characters so not generating");
           return;
         }
 
@@ -138,15 +144,19 @@ function setupTextareaListener(textarea) {
                 "currentTextarea.suggestionOverlay",
                 currentTextarea.suggestionOverlay
               );
+
               currentTextarea.suggestionOverlay.innerHTML =
                 escapeHTML(currentText) +
-                '<span class="ghost-text" style="color: gray;">' +
+                '<span class="ghost-text" style="color: rgba(128, 128, 128, 1);">' +
                 escapeHTML(suggestion) +
                 "</span>";
               console.log(
                 "currentTextarea.suggestionOverlay.innerHTML",
                 currentTextarea.suggestionOverlay.innerHTML
               );
+
+              adjustTextHeights(currentTextarea, suggestion);
+
             } else {
               console.error(
                 "Error from service worker:",
@@ -165,13 +175,20 @@ function setupTextareaListener(textarea) {
 
 // Add suggestion when user presses Tab key
 document.addEventListener("keydown", (event) => {
+  adjustTextHeights(currentTextarea);
+
   if (
     event.key === "Tab" &&
     currentTextarea &&
     currentTextarea.suggestionOverlay
   ) {
     // Get the suggestion from the overlay.
-    let currentText = currentTextarea.isContentEditable ? currentTextarea.innerText : currentTextarea.value;
+    // Get the current text from the textarea. If it is contentEditable, use innerText instead of value.
+    let currentText =
+      currentTextarea && currentTextarea.isContentEditable
+        ? currentTextarea.innerText
+        : currentTextarea.value;
+
     let ghostSpan =
       currentTextarea.suggestionOverlay.querySelector(".ghost-text");
     if (ghostSpan && ghostSpan.textContent.trim().length > 0) {
@@ -179,22 +196,59 @@ document.addEventListener("keydown", (event) => {
       // Append the suggestion to the current textarea value.
       if (currentTextarea.isContentEditable) {
         currentTextarea.innerText = currentText + ghostSpan.textContent;
-        currentTextarea.focus();
-
-        // Set the cursor at the end of the text for contentEditable elements
-        const range = document.createRange();
-        const selection = window.getSelection();
-        range.selectNodeContents(currentTextarea);
-        range.collapse(false);
-        selection.removeAllRanges();
-        selection.addRange(range);
       } else {
         currentTextarea.value = currentText + ghostSpan.textContent;
       }
-        // Update the overlay to reflect the new value (and clear the suggestion).
-      currentTextarea.suggestionOverlay.innerHTML = escapeHTML(
-        currentText
-      );
+      // Update the overlay to reflect the new value (and clear the suggestion).
+      currentTextarea.suggestionOverlay.innerHTML = escapeHTML(currentText);
+      moveCursorToEnd(currentTextarea);
+      adjustTextHeights(currentTextarea); // check again after tab completion
     }
   }
 });
+
+/// OTHER FUNCTIONS ///
+function moveCursorToEnd(textarea) {
+  textarea.focus();
+
+  if (textarea.isContentEditable) {
+    const range = document.createRange();
+    const selection = window.getSelection();
+    range.selectNodeContents(textarea);
+    range.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  } else {
+    textarea.setSelectionRange(
+      textarea.value.length,
+      textarea.value.length
+    );
+  }
+}
+
+// Adjust the height of the textarea to fit the content
+function adjustTextHeights(textarea, suggestion="") {
+  // Add the suggestion to the textarea temporarily to calculate the height
+  // Then remove it to keep the user's text intact
+  if (suggestion !== "") {
+    textarea.innerHTML = textarea.innerHTML + 
+    '<span class="temp-text" style="color: rgba(0, 0, 0, 0);">' +
+    escapeHTML(suggestion) +
+    "</span>";
+  }
+
+  textarea.style.height = "auto"; // Reset the height
+  textarea.style.height = textarea.scrollHeight + "px"; // Set the height to fit the content
+  textarea.parentElement.style.height = textarea.scrollHeight + "px"; // Set the height to fit the content
+
+  if (suggestion !== "") {
+    textarea.querySelector(".temp-text").remove();
+  }
+  moveCursorToEnd(currentTextarea);
+}
+
+function escapeHTML(str) {
+  var div = document.createElement("div");
+  div.appendChild(document.createTextNode(str));
+  return div.innerHTML;
+}
