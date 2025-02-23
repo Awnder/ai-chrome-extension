@@ -4,8 +4,9 @@ let currentHandler = null;
 // Detect when a textarea gains focus
 document.addEventListener("focusin", (event) => {
   const target = event.target;
-  if (target && target.tagName === "TEXTAREA") {
+  if (target && (target.tagName === "TEXTAREA" || target.tagName === "INPUT" || target.isContentEditable)) {
     currentTextarea = target;
+
     currentHandler = setupTextareaListener(currentTextarea);
 
     if (!(target instanceof HTMLElement)) {
@@ -34,11 +35,13 @@ document.addEventListener("focusin", (event) => {
       const computed = window.getComputedStyle(target);
       Object.assign(suggestionOverlay.style, {
         position: "absolute",
-        top: computed.paddingTop,
-        left: computed.paddingLeft,
-        width: "100%",
-        height: "100%",
+        top: `${target.offsetTop + 1}px`,
+        left: `${target.offsetLeft}px`,
+        width: "98%",
+        height: "98%",
         color: computed.getPropertyValue("background-color"), 
+        backgroundColor: computed.getPropertyValue("background-color"),
+        borderColor: computed.getPropertyValue("border-color"),
         pointerEvents: "none", // Allow text input
         fontFamily: computed.fontFamily,
         fontSize: computed.fontSize,
@@ -102,8 +105,12 @@ function setupTextareaListener(textarea) {
       // Only send if the textarea is still focused
       if (document.activeElement === textarea) {
 
+        // contentEditable divs don't have value, so need to use innerText        
+        let currentText = currentTextarea.isContentEditable ? currentTextarea.innerText : currentTextarea.value;
+
         // Only send if the textarea has more than 10 characters
-        if (currentTextarea && currentTextarea.value.trim().length <= 10) {
+        if (currentTextarea && currentText.trim().length <= 10) {
+          console.log('less than or equal to 10 characters so not generating');
           currentTextarea.suggestionOverlay.innerHTML = "";
           return;
         }
@@ -111,7 +118,7 @@ function setupTextareaListener(textarea) {
         chrome.runtime.sendMessage(
           {
             type: "TEXTAREA_UPDATE",
-            value: currentTextarea.value,
+            value: currentText,
           },
           (response) => {
             if (
@@ -119,21 +126,20 @@ function setupTextareaListener(textarea) {
               response.success &&
               currentTextarea.suggestionOverlay
             ) {
-              console.log("userText", currentTextarea.value);
-              const userText = currentTextarea.value;
+              console.log("userText", currentText);
               console.log("suggestion", response.result);
               const suggestion = response.result; // e.g., "me is Bob."
 
               // Build overlay content:
               // The user text is rendered normally and the suggestion is in a span with a lighter color.
-              console.log("escapeHTML(userText)", escapeHTML(userText));
+              console.log("escapeHTML(userText)", escapeHTML(currentText));
               console.log("escapeHTML(suggestion)", escapeHTML(suggestion));
               console.log(
                 "currentTextarea.suggestionOverlay",
                 currentTextarea.suggestionOverlay
               );
               currentTextarea.suggestionOverlay.innerHTML =
-                escapeHTML(userText) +
+                escapeHTML(currentText) +
                 '<span class="ghost-text" style="color: gray;">' +
                 escapeHTML(suggestion) +
                 "</span>";
@@ -165,18 +171,29 @@ document.addEventListener("keydown", (event) => {
     currentTextarea.suggestionOverlay
   ) {
     // Get the suggestion from the overlay.
+    let currentText = currentTextarea.isContentEditable ? currentTextarea.innerText : currentTextarea.value;
     let ghostSpan =
       currentTextarea.suggestionOverlay.querySelector(".ghost-text");
-
-    // let regularSpan = currentTextarea.suggestionOverlay.innerHTML - ghostSpan.innerHTML;
-
     if (ghostSpan && ghostSpan.textContent.trim().length > 0) {
       event.preventDefault(); // Prevent the default tab behavior.
       // Append the suggestion to the current textarea value.
-      currentTextarea.value = currentTextarea.value + ghostSpan.textContent;
-      // Update the overlay to reflect the new value (and clear the suggestion).
+      if (currentTextarea.isContentEditable) {
+        currentTextarea.innerText = currentText + ghostSpan.textContent;
+        currentTextarea.focus();
+
+        // Set the cursor at the end of the text for contentEditable elements
+        const range = document.createRange();
+        const selection = window.getSelection();
+        range.selectNodeContents(currentTextarea);
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      } else {
+        currentTextarea.value = currentText + ghostSpan.textContent;
+      }
+        // Update the overlay to reflect the new value (and clear the suggestion).
       currentTextarea.suggestionOverlay.innerHTML = escapeHTML(
-        currentTextarea.value
+        currentText
       );
     }
   }
