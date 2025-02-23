@@ -38,7 +38,7 @@ document.addEventListener("focusin", (event) => {
         left: computed.paddingLeft,
         width: "100%",
         height: "100%",
-        color: "rgba(0, 0, 0, 0.3)", // Light gray text for ghost text
+        color: computed.getPropertyValue("background-color"), 
         pointerEvents: "none", // Allow text input
         fontFamily: computed.fontFamily,
         fontSize: computed.fontSize,
@@ -47,6 +47,7 @@ document.addEventListener("focusin", (event) => {
         wordWrap: "break-word",
         overflow: "hidden",
         padding: computed.padding,
+        zIndex: "1" // Ensure overlay stays behind text
       });
 
       container.appendChild(suggestionOverlay);
@@ -63,11 +64,6 @@ document.addEventListener("focusin", (event) => {
       // Clear overlay text whenever the user starts typing
       target.addEventListener("focus", () => {
         suggestionOverlay.textContent = ""; // Clear the suggestion when focus happens
-      });
-
-      // Keep the suggestionOverlay updated with input
-      target.addEventListener("input", () => {
-        suggestionOverlay.textContent = getSuggestion(target.value);
       });
 
       target.focus();
@@ -105,6 +101,13 @@ function setupTextareaListener(textarea) {
     debounceTimeout = setTimeout(() => {
       // Only send if the textarea is still focused
       if (document.activeElement === textarea) {
+
+        // Only send if the textarea has more than 10 characters
+        if (currentTextarea && currentTextarea.value.trim().length <= 10) {
+          currentTextarea.suggestionOverlay.innerHTML = "";
+          return;
+        }
+
         chrome.runtime.sendMessage(
           {
             type: "TEXTAREA_UPDATE",
@@ -164,6 +167,9 @@ document.addEventListener("keydown", (event) => {
     // Get the suggestion from the overlay.
     let ghostSpan =
       currentTextarea.suggestionOverlay.querySelector(".ghost-text");
+
+    // let regularSpan = currentTextarea.suggestionOverlay.innerHTML - ghostSpan.innerHTML;
+
     if (ghostSpan && ghostSpan.textContent.trim().length > 0) {
       event.preventDefault(); // Prevent the default tab behavior.
       // Append the suggestion to the current textarea value.
