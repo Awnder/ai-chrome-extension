@@ -110,10 +110,19 @@ document.addEventListener("focusout", (event) => {
 function setupTextareaListener(textarea) {
   let debounceTimeout;
 
+  if (!textarea) {
+    console.error("No textarea provided to setupTextareaListener");
+    return;
+  }
+
   const handleInput = () => {
     // Clear any pending timeout
     clearTimeout(debounceTimeout);
 
+    if (!currentTextarea) {
+      console.error("No currentTextarea found for input event");
+      return;
+    }
     // Clear the suggestion overlay when the user starts typing
     currentTextarea.suggestionOverlay.innerHTML = "";
 
@@ -122,50 +131,52 @@ function setupTextareaListener(textarea) {
       // Only send if the textarea is still focused
       if (document.activeElement === textarea) {
         // contentEditable divs don't have value, so need to use innerText
+        if (!currentTextarea) {
+          return;
+        }
         let currentText =
           currentTextarea && currentTextarea.isContentEditable
             ? currentTextarea.innerText
-            : currentTextarea.value;
+            : currentTextarea?.value ?? "";
 
         // Only send if the textarea has more than 10 characters
-        if (currentTextarea && currentText.trim().length <= 10) {
-          console.log("less than or equal to 10 characters so not generating");
-          return;
-        }
+        // Uncomment if needed
+        // if (currentText.trim().length <= 10) {
+        //   console.log("less than or equal to 10 characters so not generating");
+        //   return;
+        // }
 
-        chrome.runtime.sendMessage(
-          {
-            type: "TEXTAREA_UPDATE",
-            value: currentText,
-            context: websiteContext,
-          },
-          (response) => {
-            if (
-              response &&
-              response.success &&
-              currentTextarea.suggestionOverlay
-            ) {
-              console.log("received suggestion", response.result);
-              const suggestion = response.result; // e.g., "me is Bob."
+        try {
+          if (chrome.runtime && chrome.runtime.sendMessage) {
+            chrome.runtime.sendMessage(
+              {
+                type: "TEXTAREA_UPDATE",
+                value: currentText,
+                context: websiteContext,
+              },
+              (response) => {
+                if (response?.success && currentTextarea.suggestionOverlay) {
+                  console.log("received suggestion", response.result);
+                  const suggestion = response.result; // e.g., "me is Bob."
 
-              // Build overlay content:
-              // The user text is rendered normally and the suggestion is in a span with a lighter color.
+                  // Build overlay content:
+                  // The user text is rendered normally and the suggestion is in a span with a lighter color.
+                  currentTextarea.suggestionOverlay.innerHTML =
+                    escapeHTML(currentText) +
+                    '<span class="ghost-text" style="color: rgba(128, 128, 128, 1);">' +
+                    escapeHTML(suggestion) +
+                    "</span>";
 
-              currentTextarea.suggestionOverlay.innerHTML =
-                escapeHTML(currentText) +
-                '<span class="ghost-text" style="color: rgba(128, 128, 128, 1);">' +
-                escapeHTML(suggestion) +
-                "</span>";
-
-              adjustTextHeights(currentTextarea, suggestion); // adjusting height to fit suggestion
-            } else {
-              console.error(
-                "Error from service worker:",
-                response ? response.error : "No response received"
-              );
-            }
+                  adjustTextHeights(currentTextarea, suggestion); // Adjust height to fit suggestion
+                }
+              }
+            );
+          } else {
+            console.error("chrome.runtime or sendMessage is not available");
           }
-        );
+        } catch (error) {
+          console.error("Error sending message:", error);
+        }
       }
     }, 1000);
   };
@@ -177,10 +188,14 @@ function setupTextareaListener(textarea) {
 // Add suggestion when user presses Tab key
 document.addEventListener("keydown", (event) => {
   // Get the current text from the textarea. If it is contentEditable, use innerText instead of value.
-  let currentText =
-    currentTextarea && currentTextarea.isContentEditable
-      ? currentTextarea.innerText
-      : currentTextarea.value;
+
+  if (!currentTextarea) {
+    return;
+  }
+
+  let currentText = currentTextarea.isContentEditable
+    ? currentTextarea.innerText ?? ""
+    : currentTextarea.value ?? "";
 
   let superKey = "⌘";
   if (!/(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
