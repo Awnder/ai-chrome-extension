@@ -69,6 +69,7 @@ document.addEventListener("focusin", (event) => {
         container.style.display = "inline-block";
         container.style.width = `${target.offsetWidth}px`; // Match textarea width
         container.style.height = `${target.offsetHeight}px`; // Match textarea height
+        container.style.boxSizing = "border-box"; // Include padding/border
 
         // Insert container and move textarea inside
         target.parentElement.insertBefore(container, target);
@@ -97,6 +98,7 @@ document.addEventListener("focusin", (event) => {
           zIndex: "0", // Ensure overlay stays behind text
           overflowY: "auto", // Prevent overlay from overlapping
           lineHeight: computed.lineHeight,
+          boxSizing: "border-box", // Ensure padding/border is accounted for
         });
 
         container.appendChild(suggestionOverlay);
@@ -106,6 +108,7 @@ document.addEventListener("focusin", (event) => {
         target.style.background = "transparent";
         target.style.position = "relative";
         target.style.zIndex = "1"; // Ensure input is above the overlay
+        target.style.boxSizing = "border-box"; // Ensure padding/border is included
 
         // Clear overlay text whenever the user starts typing
         target.addEventListener("focus", () => {
@@ -183,6 +186,10 @@ function setupTextareaListener(textarea) {
             ? currentTextarea.innerText
             : currentTextarea?.value ?? "";
 
+        if (!currentText || currentText.trim() === "") {
+          return;
+        }
+
         try {
           if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
             chrome.runtime.sendMessage(
@@ -202,7 +209,7 @@ function setupTextareaListener(textarea) {
                     currentTextarea.suggestionOverlay.innerHTML =
                       '<span class="user-text">' +
                       escapeHTML(currentText) +
-                      '</span>' +
+                      "</span>" +
                       '<span class="ghost-text" style="font-style: italic;">' +
                       escapeHTML(suggestion) +
                       "</span>";
