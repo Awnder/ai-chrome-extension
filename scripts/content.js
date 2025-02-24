@@ -1,7 +1,19 @@
 let currentTextarea = null;
 let currentHandler = null;
-
+let websiteContext = null;
 /// MAIN EVENT LISTENERS ///
+
+window.onload = function() {
+  const metaTags = document.getElementsByTagName("meta");
+  const titleTags = document.getElementsByTagName("title"); 
+  websiteContext =
+    Array.from(metaTags)
+      .map((tag) => tag.outerHTML)
+      .join("") +
+    Array.from(titleTags)
+      .map((tag) => tag.outerHTML)
+      .join("");
+};
 
 // Detect when a textarea gains focus
 document.addEventListener("focusin", (event) => {
@@ -38,7 +50,7 @@ document.addEventListener("focusin", (event) => {
       container.style.display = "inline-block";
       container.style.width = `${target.offsetWidth}px`; // Match textarea width
       container.style.height = `${target.offsetHeight}px`; // Match textarea height
-      
+
       // Insert container and move textarea inside
       target.parentElement.insertBefore(container, target);
       container.appendChild(target);
@@ -125,6 +137,7 @@ function setupTextareaListener(textarea) {
           {
             type: "TEXTAREA_UPDATE",
             value: currentText,
+            context: websiteContext,
           },
           (response) => {
             if (
@@ -156,7 +169,6 @@ function setupTextareaListener(textarea) {
               );
 
               adjustTextHeights(currentTextarea, suggestion); // adjusting height to fit suggestion
-
             } else {
               console.error(
                 "Error from service worker:",
@@ -177,21 +189,26 @@ function setupTextareaListener(textarea) {
 document.addEventListener("keydown", (event) => {
   // Get the current text from the textarea. If it is contentEditable, use innerText instead of value.
   let currentText =
-  currentTextarea && currentTextarea.isContentEditable
-    ? currentTextarea.innerText
-    : currentTextarea.value;
-  
+    currentTextarea && currentTextarea.isContentEditable
+      ? currentTextarea.innerText
+      : currentTextarea.value;
+
   let superKey = "⌘";
   if (!/(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
-      superKey = "Ctrl";
+    superKey = "Ctrl";
   }
-  
+
   // Allow superKey keybinds to go through
   if (event.key === superKey && (event.ctrlKey || event.metaKey)) {
     return;
   }
-  
-  if (currentTextarea.suggestionOverlay && (event.key === "Escape" || event.key === "Enter" || event.key === "Backspace")) {
+
+  if (
+    currentTextarea.suggestionOverlay &&
+    (event.key === "Escape" ||
+      event.key === "Enter" ||
+      event.key === "Backspace")
+  ) {
     currentTextarea.suggestionOverlay.innerHTML = "";
     adjustTextHeights(currentTextarea);
   }
@@ -233,29 +250,27 @@ function moveCursorToEnd(textarea) {
     selection.removeAllRanges();
     selection.addRange(range);
   } else {
-    textarea.setSelectionRange(
-      textarea.value.length,
-      textarea.value.length
-    );
+    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
   }
 }
 
 // Adjust the height of the textarea to fit the content
-function adjustTextHeights(textarea, suggestion="") {
+function adjustTextHeights(textarea, suggestion = "") {
   // Add the suggestion to the textarea temporarily to calculate the height
   // Then remove it to keep the user's text intact
   if (suggestion !== "") {
-    textarea.innerHTML = textarea.innerHTML + 
-    '<span class="temp-text" style="color: rgba(0, 0, 0, 0);">' +
-    escapeHTML(suggestion) +
-    "</span>";
+    textarea.innerHTML =
+      textarea.innerHTML +
+      '<span class="temp-text" style="color: rgba(0, 0, 0, 0);">' +
+      escapeHTML(suggestion) +
+      "</span>";
   }
 
   textarea.style.height = "auto"; // Reset the height
   textarea.style.height = textarea.scrollHeight + "px"; // Set the height to fit the content
   textarea.parentElement.style.height = textarea.scrollHeight + "px"; // Set the height to fit the content
 
-  if (suggestion !== "") {
+  if (suggestion !== "" && textarea.querySelector(".temp-text")) {
     textarea.querySelector(".temp-text").remove();
   }
 
