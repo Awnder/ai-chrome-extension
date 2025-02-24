@@ -211,26 +211,20 @@ document.addEventListener("keydown", (event) => {
 
     let ghostSpan =
       currentTextarea.suggestionOverlay.querySelector(".ghost-text");
-    if (ghostSpan && ghostSpan.textContent.trim().length > 0) {
-      let suggestionText = ghostSpan.textContent;
+    let suggestionText = ghostSpan.textContent;
 
-      // Check if currentText ends with a letter (indicating an incomplete word)
-      let lastChar = currentText.slice(-1);
-      let needsSpace = lastChar.match(/[a-zA-Z0-9]/) ? "" : " ";
+    let updatedText = currentText + suggestionText;
 
-      let updatedText = currentText + needsSpace + suggestionText;
-
-      if (currentTextarea.isContentEditable) {
-        currentTextarea.textContent = updatedText;
-      } else {
-        currentTextarea.value = updatedText.replace(/\n$/, ""); // Prevent unintended newlines.
-      }
-
-      // Update the overlay and adjust layout.
-      currentTextarea.suggestionOverlay.innerHTML = escapeHTML(updatedText);
-      moveCursorToEnd(currentTextarea);
-      adjustTextHeights(currentTextarea);
+    if (currentTextarea.isContentEditable) {
+      currentTextarea.textContent = updatedText;
+    } else {
+      currentTextarea.value = updatedText.replace(/\n$/, ""); // Prevent unintended newlines.
     }
+
+    // Update the overlay and adjust layout.
+    currentTextarea.suggestionOverlay.innerHTML = escapeHTML(updatedText);
+    moveCursorToEnd(currentTextarea);
+    adjustTextHeights(currentTextarea);
   }
 });
 
