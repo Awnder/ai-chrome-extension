@@ -71,10 +71,16 @@ By following these rules, you will ensure that the last sentence is autocomplete
 const API_KEY = "AIzaSyD2PtfCJ8EoygZ_risepMfEjSjJjAmReU0";
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${API_KEY}`;
 
-async function callGemini(content) {
+async function callGemini(content, context) {
   const requestBody = {
     contents: [
-      { parts: [{ text: `${systemPrompt}. Here is the text: ${content}` }] },
+      {
+        parts: [
+          {
+            text: `${systemPrompt}.\nHere is website context: ${context}.\nHere is the text from the user: ${content}.`,
+          },
+        ],
+      },
     ],
   };
 
@@ -107,8 +113,9 @@ async function callGemini(content) {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "TEXTAREA_UPDATE") {
     console.log("Textarea content updated:", message.value);
+    console.log("Website context:", message.context);
 
-    callGemini(message.value)
+    callGemini(message.value, message.context)
       .then((result) => {
         console.log("generated suggestion:", result);
         if (result) {
