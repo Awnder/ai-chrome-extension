@@ -33,7 +33,6 @@ window.onload = function () {
 };
 
 // Detect when a textarea gains focus
-// Detect when a textarea gains focus
 document.addEventListener("focusin", (event) => {
   const target = event.target;
 
@@ -51,7 +50,6 @@ document.addEventListener("focusin", (event) => {
         target.isContentEditable)
     ) {
       currentTextarea = target;
-
       currentHandler = setupTextareaListener(currentTextarea);
 
       // Skip input types for privacy if necessary
@@ -91,12 +89,14 @@ document.addEventListener("focusin", (event) => {
         // Assign specific styles for suggestionOverlay
         Object.assign(suggestionOverlay.style, {
           position: "absolute",
-          top: `${target.offsetTop}px`,
-          left: `${target.offsetLeft}px`,
+          top: "0",
+          left: "0",
           width: "100%",
           height: "100%",
           pointerEvents: "none", // Allow text input
           zIndex: "0", // Ensure overlay stays behind text
+          overflowY: "auto", // Prevent overlay from overlapping
+          lineHeight: computed.lineHeight,
         });
 
         container.appendChild(suggestionOverlay);
@@ -111,6 +111,9 @@ document.addEventListener("focusin", (event) => {
         target.addEventListener("focus", () => {
           suggestionOverlay.textContent = ""; // Clear the suggestion when focus happens
         });
+
+        // Ensure textarea is scrollable if text overflows
+        target.style.overflowY = "auto";
 
         target.focus();
       }
@@ -325,25 +328,45 @@ function moveCursorToEnd(textarea) {
 // Adjust the height of the textarea to fit the content
 function adjustTextHeights(textarea, suggestion = "") {
   try {
-    // Add the suggestion to the textarea temporarily to calculate the height
-    // Then remove it to keep the user's text intact
+    // Save the current value of the textarea to avoid altering user input
+    const originalValue = textarea.value;
+
+    // If there is a suggestion, temporarily add it to calculate the height
     if (suggestion !== "") {
-      textarea.innerHTML =
-        textarea.innerHTML +
-        '<span class="temp-text" style="color: rgba(0, 0, 0, 0);">' +
-        escapeHTML(suggestion) +
-        "</span>";
+      // Create a temporary element to hold the suggestion text for height calculation
+      const tempDiv = document.createElement("div");
+      tempDiv.style.position = "absolute"; // Ensure it's out of the flow
+      tempDiv.style.visibility = "hidden"; // Make it invisible
+      tempDiv.style.whiteSpace = "pre-wrap"; // Preserve line breaks, if any
+      tempDiv.style.wordWrap = "break-word"; // Prevent word overflow
+      tempDiv.style.font = window.getComputedStyle(textarea).font; // Match textarea font
+
+      // Append the suggestion text to the tempDiv
+      tempDiv.textContent = suggestion;
+
+      document.body.appendChild(tempDiv);
+
+      // Set the textarea height to auto before measuring
+      textarea.style.height = "auto";
+
+      // Adjust the height based on the content and the suggestion
+      const newHeight = Math.max(textarea.scrollHeight, tempDiv.scrollHeight);
+      textarea.style.height = newHeight + "px";
+
+      // Clean up after measuring
+      document.body.removeChild(tempDiv);
+    } else {
+      // Reset the height to fit the content only (no suggestion)
+      textarea.style.height = "auto"; // Ensure textarea resizes to content
+      textarea.style.height = textarea.scrollHeight + "px";
     }
 
-    textarea.style.height = "auto"; // Reset the height
-    textarea.style.height = textarea.scrollHeight + "px"; // Set the height to fit the content
-    textarea.parentElement.style.height = textarea.scrollHeight + "px"; // Set the height to fit the content
-
-    if (suggestion !== "" && textarea.querySelector(".temp-text")) {
-      textarea.querySelector(".temp-text").remove();
+    // Adjust the parent element height to match textarea
+    if (textarea.parentElement) {
+      textarea.parentElement.style.height = textarea.style.height;
     }
 
-    moveCursorToEnd(textarea); // After suggestions are deleted or fulfilled
+    moveCursorToEnd(textarea); // Ensure the cursor stays at the end after resizing
   } catch (error) {
     console.error("Error adjusting text heights:", error);
   }
