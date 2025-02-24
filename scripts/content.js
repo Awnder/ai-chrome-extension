@@ -200,10 +200,13 @@ function setupTextareaListener(textarea) {
                   // The user text is rendered normally and the suggestion is in a span with a lighter color.
                   try {
                     currentTextarea.suggestionOverlay.innerHTML =
+                      '<span class="user-text">' +
                       escapeHTML(currentText) +
-                      '<span class="ghost-text" style="color: rgba(128, 128, 128, 1);">' +
+                      '</span>' +
+                      '<span class="ghost-text" style="font-style: italic;">' +
                       escapeHTML(suggestion) +
                       "</span>";
+
                     adjustTextHeights(currentTextarea, suggestion); // Adjust height to fit suggestion
                   } catch (innerError) {
                     console.error(
