@@ -3,9 +3,9 @@ let currentHandler = null;
 let websiteContext = null;
 /// MAIN EVENT LISTENERS ///
 
-window.onload = function() {
+window.onload = function () {
   const metaTags = document.getElementsByTagName("meta");
-  const titleTags = document.getElementsByTagName("title"); 
+  const titleTags = document.getElementsByTagName("title");
   websiteContext =
     Array.from(metaTags)
       .map((tag) => tag.outerHTML)
@@ -145,28 +145,17 @@ function setupTextareaListener(textarea) {
               response.success &&
               currentTextarea.suggestionOverlay
             ) {
-              console.log("userText", currentText);
-              console.log("suggestion", response.result);
+              console.log("received suggestion", response.result);
               const suggestion = response.result; // e.g., "me is Bob."
 
               // Build overlay content:
               // The user text is rendered normally and the suggestion is in a span with a lighter color.
-              console.log("escapeHTML(userText)", escapeHTML(currentText));
-              console.log("escapeHTML(suggestion)", escapeHTML(suggestion));
-              console.log(
-                "currentTextarea.suggestionOverlay",
-                currentTextarea.suggestionOverlay
-              );
 
               currentTextarea.suggestionOverlay.innerHTML =
                 escapeHTML(currentText) +
                 '<span class="ghost-text" style="color: rgba(128, 128, 128, 1);">' +
                 escapeHTML(suggestion) +
                 "</span>";
-              console.log(
-                "currentTextarea.suggestionOverlay.innerHTML",
-                currentTextarea.suggestionOverlay.innerHTML
-              );
 
               adjustTextHeights(currentTextarea, suggestion); // adjusting height to fit suggestion
             } else {
@@ -218,19 +207,27 @@ document.addEventListener("keydown", (event) => {
     currentTextarea &&
     currentTextarea.suggestionOverlay
   ) {
-    // Get the suggestion from the overlay.
+    event.preventDefault(); // Prevent default Tab behavior immediately.
+
     let ghostSpan =
       currentTextarea.suggestionOverlay.querySelector(".ghost-text");
     if (ghostSpan && ghostSpan.textContent.trim().length > 0) {
-      event.preventDefault(); // Prevent the default tab behavior.
-      // Append the suggestion to the current textarea value.
+      let suggestionText = ghostSpan.textContent;
+
+      // Check if currentText ends with a letter (indicating an incomplete word)
+      let lastChar = currentText.slice(-1);
+      let needsSpace = lastChar.match(/[a-zA-Z0-9]/) ? "" : " ";
+
+      let updatedText = currentText + needsSpace + suggestionText;
+
       if (currentTextarea.isContentEditable) {
-        currentTextarea.innerText = currentText + ghostSpan.textContent;
+        currentTextarea.textContent = updatedText;
       } else {
-        currentTextarea.value = currentText + ghostSpan.textContent;
+        currentTextarea.value = updatedText.replace(/\n$/, ""); // Prevent unintended newlines.
       }
-      // Update the overlay to reflect the new value (and clear the suggestion).
-      currentTextarea.suggestionOverlay.innerHTML = escapeHTML(currentText);
+
+      // Update the overlay and adjust layout.
+      currentTextarea.suggestionOverlay.innerHTML = escapeHTML(updatedText);
       moveCursorToEnd(currentTextarea);
       adjustTextHeights(currentTextarea);
     }

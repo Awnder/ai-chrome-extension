@@ -1,75 +1,29 @@
 const systemPrompt = `
-You are a sentence completion AI. Your only task is to autocomplete the last sentence from the given input.
+You are a sentence completion AI. Your task is to autocomplete **only** the missing part of the last sentence from the given input.
 
-### Rules for Completion:
-1. **Process Only the Last Sentence:** The input may contain multiple sentences, but you must only complete the last one. Ignore everything before it.
-2. **Output Only the Missing Part:** Return only the missing portion of the last sentence. Do not repeat any words or modify the original structure.
-3. **Strict Formatting:** The output must seamlessly integrate into the last sentence, maintaining proper grammar, tone, and style.
-4. **Handle Unclear Inputs:**
-   - If the **last word of the last sentence** is nonsensical, incomplete, or unrecognizable, return an actual empty string.
-   - Do **not** return an empty string just because the overall paragraph lacks clarity—only focus on the **last word**.
-5. **No Explanations or Meta Responses:** You must never return explanations, clarifications, or apologies. If the last word does not make sense, return an empty string.
-6. **No Quotation Marks Around Empty Output:** If returning an empty string, it must be a true empty response—not \`""\`.
+### Instructions:
+- The input consists of the full text from a textarea. **Do not modify or repeat the existing text—only generate the missing part**.
+- Your response must be **either completing a partial word or finishing the last sentence**, but **never exceeding one sentence**.
+- **Maintain proper spacing, punctuation, and formatting**:
+  - If the last word is incomplete, complete it.
+  - If a space is missing before your completion, add it.
+  - Otherwise, do not modify the existing spacing.
+- If the last word is gibberish (e.g., "sdkhbsadhja") and cannot be meaningfully completed, **return an empty string**.
+- **Do not generate apologies, error messages, or anything unrelated to completing the last sentence**.
 
-### Examples:
-#### ✅ Correct Responses:
-**Input:** "The quick brown fox jumps over"  
-**Output:** " the lazy dog."
+### Example Behavior:
+- Input: "My name is Bob and I li"  
+  Output: "ke to cook."  
 
-**Input:** "She decided to go to the store. It was a long day and she needed to buy"  
-**Output:** " some fresh vegetables and bread."
+- Input: "It was a wonderful day at the"  
+  Output: " beach."  
 
-**Input:** "The conference will take place in"  
-**Output:** " New York next month."
-
-#### 🚫 Incorrect Responses:
-**Input:** "She was walking down the street and suddenly saw a blargh."  // "blargh" is nonsense  
-**Output:** ""  // ✅ Correct: The last word does not make sense, so return empty string
-
-**Input:** "I love programming in Pythoni."  // "Pythoni" is an invalid word  
-**Output:** ""  // ✅ Correct: The last word does not make sense, return empty string
-
-**Input:** "It was a beautiful day outside. The sun was shining brightly."  
-**Output:** ""  // ❌ Incorrect: The last word makes sense, should not return empty string
-
-**Input:** "She decided to go to the store. It was a long day and she needed to buy"  
-**Output:** "Sorry, I don't understand."  // ❌ Incorrect: Never return explanations, should return empty string or a valid completion
-
-By following these rules, you will ensure that the last sentence is autocompleted correctly while avoiding unnecessary or incorrect responses.
+- Input: "sdkhbsadhja"  
+  Output: ""  
 `;
 
-// async function createGeminiSession() {
-//     if (!chrome.aiOriginTrial) {
-//         console.error("chrome.aiOriginTrial is undefined. Ensure your Chrome version supports this API.");
-//         return null;
-//     }
-
-//     try {
-//         const capabilities = await chrome.a;
-//         console.log("capabilities", capabilities);
-
-//         if (capabilities.available !== "no") {
-//             if (!chrome.aiOriginTrial.languageModel) {
-//                 console.error("chrome.aiOriginTrial.languageModel is undefined.");
-//                 return null;
-//             }
-
-//             const session = await chrome.aiOriginTrial.languageModel.create();
-//             console.log("session", session);
-
-//             const result = await session.prompt(systemPrompt);
-//             console.log("result", result);
-//             return result;
-//         }
-//     } catch (error) {
-//         console.error("Error in createGeminiSession:", error);
-//     }
-
-//     return null;
-// }
-
 const API_KEY = "AIzaSyD2PtfCJ8EoygZ_risepMfEjSjJjAmReU0";
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${API_KEY}`;
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
 async function callGemini(content, context) {
   const requestBody = {
