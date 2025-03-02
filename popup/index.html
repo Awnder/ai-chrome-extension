@@ -3,13 +3,73 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="A description of your page" />
-    <link rel="icon" type="image/png" href="icons/icon128.png">
-    <title>AI Chrome Extension</title>
+    <link rel="icon" type="image/png" href="icons/icon128.png" />
+    <title>Configure your AI</title>
     <link
       href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css"
       rel="stylesheet"
     />
+    <style>
+      body {
+        width: 300px;
+        height: 400px;
+        margin: 0;
+        font-family: "Arial", sans-serif;
+      }
+    </style>
   </head>
-  <body></body>
+  <body
+    class="bg-gradient-to-br from-blue-700 to-blue-900 p-6 text-black flex flex-col justify-between rounded-xl"
+  >
+    <h1 class="text-2xl font-semibold mb-6 text-center">Configuration</h1>
+
+    <!-- Dropdown for selecting AI models -->
+    <label for="modelSelect" class="text-sm mb-2">Model:</label>
+    <select id="modelSelect" class="p-2 rounded-md border border-gray-600 mb-4">
+      <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+      <option value="gemini-1.5-flash-8b">Gemini 1.5 Flash-8B</option>
+      <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+      <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+      <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash-Lite</option>
+    </select>
+
+    <!-- Textarea for system prompt -->
+    <label for="instructions" class="block text-sm mb-2"
+      >Instructions for AI:</label
+    >
+    <textarea
+      id="instructions"
+      rows="4"
+      class="w-full p-2 rounded-md border border-gray-600 mb-4"
+      placeholder="Talk like a 19th century gentleman..."
+    ></textarea>
+
+    <!-- Submit Button -->
+    <button
+      id="saveConfigBtn"
+      class="p-2 rounded-md bg-gradient-to-br from-blue-500 to-blue-900 hover:from-blue-700 border border-black w-full"
+    >
+      Save Configuration
+    </button>
+
+    <!-- Restore Default Button -->
+    <button
+      id="restoreDefaultConfigBtn"
+      class="p-2 mt-4 rounded-md bg-gradient-to-br from-gray-400 to-gray-600 hover:from-gray-500 border border-black w-full"
+    >
+      Restore Default Configuration
+    </button>
+
+    <!-- Loading Spinner (Initially hidden) -->
+    <div
+      id="loadingSpinner"
+      class="hidden flex justify-center items-center mt-4"
+    >
+      <div
+        class="spinner-border animate-spin border-4 border-t-4 border-blue-500 rounded-full w-6 h-6"
+      ></div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
 </html>

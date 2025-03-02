@@ -1,4 +1,4 @@
-const systemPrompt = `
+const defaultSystemPrompt = `
 You are a sentence completion AI. Your task is to **either autocomplete the last word, complete the last sentence, or add a natural follow-up sentence** based on the given input.
 
 ### Instructions:
@@ -32,16 +32,23 @@ You are a sentence completion AI. Your task is to **either autocomplete the last
   Output: " She looked around the room."  
 
 - Input: "I had some challe"  
-  Output: "nges I had to overcome." (doesn’t end the sentence; leaves it open)
+  Output: "nges I had to overcome." (doesn't end the sentence; leaves it open)
 
 - Input: "I went to the store and bought a new"  
   Output: " pair of shoes." (adds a natural completion without finishing the sentence)
 `;
 
-const API_KEY = "AIzaSyD2PtfCJ8EoygZ_risepMfEjSjJjAmReU0";
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+const defaultModel = "gemini-1.5-flash";
 
-async function callGemini(content, context) {
+let systemPrompt = defaultSystemPrompt;
+
+let model = defaultModel;
+
+const API_KEY = "AIzaSyD2PtfCJ8EoygZ_risepMfEjSjJjAmReU0";
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
+
+async function getAutocomplete(content, context) {
+  console.log("getAutocomplete called with systemPrompt:", systemPrompt);
   const requestBody = {
     contents: [
       {
@@ -64,9 +71,10 @@ async function callGemini(content, context) {
     });
 
     const data = await response.json();
-    console.log("data from Gemini API:", data);
+    console.log("data from getAutoComplete:", data);
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     if (text && text !== '""') {
+      console.log("Returning text:", text);
       return text;
     } else {
       return;
@@ -82,18 +90,93 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("Received Text:", message.value);
     console.log("Received Context:", message.context);
 
-    callGemini(message.value, message.context)
+    getAutocomplete(message.value, message.context)
       .then((result) => {
-        console.log("generated suggestion:", result);
         if (result) {
-          sendResponse({ success: true, result }); // Send result with response
+          sendResponse({ success: true, result });
         }
       })
       .catch((error) => {
-        console.error("Error in callGemini:", error);
+        console.error("Error in getAutocomplete:", error);
         sendResponse({ success: false, error: error.message });
       });
 
     return true;
+  }
+});
+
+async function generateNewSystemPrompt(userPrompt) {
+  // send systemPrompt to AI to combine with existing systemPrompt
+  const requestBody = {
+    contents: [
+      {
+        parts: [
+          {
+            text: `Help me merge the following system prompt (created by a developer) and the user's instructions in a cohesive way. 
+            Ensure there are no conflicts between them. 
+            Here is the developer's system prompt: "${systemPrompt}".
+            Here are the user's instructions: "${userPrompt}".`,
+          },
+        ],
+      },
+    ],
+  };
+
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    const data = await response.json();
+    console.log("data from generateNewSystemPrompt:", data);
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (text) {
+      return text;
+    } else {
+      return;
+    }
+  } catch (error) {
+    console.error("Error calling Gemini API:", error);
+    return;
+  }
+}
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === "CONFIG") {
+    const { newModel, instructions } = message.data;
+
+    // You can now use this data (e.g., save it, make an API call, etc.)
+    console.log("Received config:", model, instructions);
+
+    // send systemPrompt to AI to combine with existing systemPrompt
+    generateNewSystemPrompt(instructions)
+      .then((result) => {
+        if (result) {
+          systemPrompt = result;
+          sendResponse({ status: "Config saved successfully" });
+        }
+      })
+      .catch((error) => {
+        console.error("Error in generateNewSystemPrompt:", error);
+        sendResponse({ status: "Error saving config" });
+      });
+
+    model = newModel;
+
+    // Respond to the popup
+    sendResponse({ status: "Config saved successfully" });
+  }
+});
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === "RESTORE_DEFAULT_CONFIG") {
+    // Restore the default configuration
+    systemPrompt = defaultSystemPrompt;
+    model = defaultModel;
+    sendResponse({ status: "Default config restored" });
   }
 });
