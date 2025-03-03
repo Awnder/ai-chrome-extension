@@ -21,7 +21,32 @@
   <body
     class="bg-gradient-to-br from-blue-700 to-blue-900 p-6 text-black flex flex-col justify-between rounded-xl"
   >
-    <h1 class="text-2xl font-semibold mb-6 text-center">Configuration</h1>
+    <!-- Heading -->
+    <div class="flex justify-between items-center mb-2">
+      <h1 class="text-2xl font-semibold">AI Studio</h1>
+
+      <!-- Container for the image and helper text -->
+      <div class="relative">
+        <img
+          id="icon"
+          src="/icons/icon128.png"
+          alt="Logo"
+          class="w-10 h-10 mr-8"
+        />
+        <!-- Info text that appears on hover -->
+        <div
+          id="infoText"
+          class="absolute left-[-40px] transform -translate-x-1/2 w-48 bg-blue-700 text-black text-xs rounded p-2 shadow-lg opacity-0 transition-opacity"
+        >
+          <p>
+            Please note that the configuration settings will need to be reset
+            to default when you turn the extension on/off. Additionally, the
+            extension may not work perfectly with all website inputs and could
+            cause some display issues with text.
+          </p>
+        </div>
+      </div>
+    </div>
 
     <!-- Dropdown for selecting AI models -->
     <label for="modelSelect" class="text-sm mb-2">Model:</label>

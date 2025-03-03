@@ -8,7 +8,7 @@ document.getElementById("saveConfigBtn").addEventListener("click", () => {
   // get the api key from the input field
   const apiKey = document.getElementById("apiKey").value;
 
-  console.log('apiKey:', apiKey);
+  console.log("apiKey:", apiKey);
 
   // Create a message object with the configuration data
   const configData = {
@@ -63,3 +63,15 @@ document
       }
     );
   });
+
+document.getElementById("icon").addEventListener("mouseover", () => {
+  const infoText = document.getElementById("infoText");
+  infoText.style.opacity = "1"; // Make the info text visible
+  infoText.style.pointerEvents = "auto"; // Enable interaction with the text
+});
+
+document.getElementById("icon").addEventListener("mouseout", () => {
+  const infoText = document.getElementById("infoText");
+  infoText.style.opacity = "0"; // Hide the info text
+  infoText.style.pointerEvents = "none"; // Disable interaction with the text
+});
