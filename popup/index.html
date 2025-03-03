@@ -36,7 +36,7 @@
         <!-- Info text that appears on hover -->
         <div
           id="infoText"
-          class="absolute left-[-40px] transform -translate-x-1/2 w-48 bg-blue-700 text-black text-xs rounded p-2 shadow-lg opacity-0 transition-opacity"
+          class="absolute left-[-40px] transform -translate-x-1/2 w-48 bg-blue-700 text-black text-xs rounded p-2 shadow-lg opacity-0 transition-opacity z-10"
         >
           <p>
             Please note that the configuration settings will need to be reset
@@ -50,7 +50,7 @@
 
     <!-- Dropdown for selecting AI models -->
     <label for="modelSelect" class="text-sm mb-2">Model:</label>
-    <select id="modelSelect" class="p-2 rounded-md border border-gray-600 mb-4">
+    <select id="modelSelect" class="p-2 rounded-md border border-gray-600 mb-4 z-20">
       <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
       <option value="gemini-1.5-flash-8b">Gemini 1.5 Flash-8B</option>
       <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>

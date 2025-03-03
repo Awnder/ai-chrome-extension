@@ -62,10 +62,12 @@ document.getElementById("icon").addEventListener("mouseover", () => {
   const infoText = document.getElementById("infoText");
   infoText.style.opacity = "1"; // Make the info text visible
   infoText.style.pointerEvents = "auto"; // Enable interaction with the text
+  infoText.style.zIndex = "25"; // Bring the text to the front
 });
 
 document.getElementById("icon").addEventListener("mouseout", () => {
   const infoText = document.getElementById("infoText");
   infoText.style.opacity = "0"; // Hide the info text
   infoText.style.pointerEvents = "none"; // Disable interaction with the text
+  infoText.style.zIndex = "10"; // Send the text to the back
 });
