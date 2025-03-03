@@ -44,21 +44,42 @@
       placeholder="Talk like a 19th century gentleman..."
     ></textarea>
 
-    <!-- Submit Button -->
-    <button
-      id="saveConfigBtn"
-      class="p-2 rounded-md bg-gradient-to-br from-blue-500 to-blue-900 hover:from-blue-700 border border-black w-full"
-    >
-      Save Configuration
-    </button>
+    <!-- Container for label and link -->
+    <div class="flex justify-between items-center mb-2">
+      <label for="apiKey" class="text-sm">API Key:</label>
+      <a
+        href="https://aistudio.google.com/app/apikey"
+        target="_blank"
+        class="text-xs text-blue-400 underline"
+        >Retrieve Key</a
+      >
+    </div>
 
-    <!-- Restore Default Button -->
-    <button
-      id="restoreDefaultConfigBtn"
-      class="p-2 mt-4 rounded-md bg-gradient-to-br from-gray-400 to-gray-600 hover:from-gray-500 border border-black w-full"
-    >
-      Restore Default Configuration
-    </button>
+    <!-- Input for Google API Key -->
+    <input
+      type="password"
+      id="apiKey"
+      class="w-full p-2 rounded-md border border-gray-600 mb-4"
+      placeholder="Enter your Google AI Studio API Key"
+    />
+
+    <div class="flex gap-2">
+      <!-- Save Configuration Button -->
+      <button
+        id="saveConfigBtn"
+        class="p-2 rounded-md bg-gradient-to-br from-blue-500 to-blue-900 hover:from-blue-700 border border-black w-1/2"
+      >
+        Save Configuration
+      </button>
+
+      <!-- Restore Default Button -->
+      <button
+        id="restoreDefaultConfigBtn"
+        class="p-2 rounded-md bg-gradient-to-br from-gray-400 to-gray-600 hover:from-gray-500 border border-black w-1/2"
+      >
+        Restore Default
+      </button>
+    </div>
 
     <!-- Loading Spinner (Initially hidden) -->
     <div

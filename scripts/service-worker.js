@@ -45,10 +45,13 @@ let systemPrompt = defaultSystemPrompt;
 let model = defaultModel;
 
 const API_KEY = "AIzaSyD2PtfCJ8EoygZ_risepMfEjSjJjAmReU0";
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
+let apiKey = API_KEY;
+let API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
 async function getAutocomplete(content, context) {
-  console.log("getAutocomplete called with systemPrompt:", systemPrompt);
+  console.log(`Getting autocomplete with prompt: ${systemPrompt}.`);
+
+  console;
   const requestBody = {
     contents: [
       {
@@ -80,7 +83,7 @@ async function getAutocomplete(content, context) {
       return;
     }
   } catch (error) {
-    console.error("Error calling Gemini API:", error);
+    console.error("Error getting autocomplete:", error);
     return;
   }
 }
@@ -140,20 +143,20 @@ async function generateNewSystemPrompt(userPrompt) {
       return;
     }
   } catch (error) {
-    console.error("Error calling Gemini API:", error);
+    console.error("Error generating new prompt:", error);
     return;
   }
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "CONFIG") {
-    const { newModel, instructions } = message.data;
+    const { userModel, userInstructions, userApiKey } = message.data;
 
     // You can now use this data (e.g., save it, make an API call, etc.)
-    console.log("Received config:", model, instructions);
+    console.log("Received config:", userModel, userInstructions, userApiKey);
 
     // send systemPrompt to AI to combine with existing systemPrompt
-    generateNewSystemPrompt(instructions)
+    generateNewSystemPrompt(userInstructions)
       .then((result) => {
         if (result) {
           systemPrompt = result;
@@ -165,7 +168,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ status: "Error saving config" });
       });
 
-    model = newModel;
+    model = userModel;
+
+    if (userApiKey && userApiKey !== "") {
+      apiKey = userApiKey;
+    }
+
+    API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
     // Respond to the popup
     sendResponse({ status: "Config saved successfully" });
@@ -177,6 +186,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Restore the default configuration
     systemPrompt = defaultSystemPrompt;
     model = defaultModel;
+    apiKey = API_KEY;
+    API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
     sendResponse({ status: "Default config restored" });
   }
 });

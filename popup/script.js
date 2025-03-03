@@ -5,10 +5,16 @@ document.getElementById("saveConfigBtn").addEventListener("click", () => {
   // Get the system prompt from the textarea
   const userPrompt = document.getElementById("instructions").value;
 
+  // get the api key from the input field
+  const apiKey = document.getElementById("apiKey").value;
+
+  console.log('apiKey:', apiKey);
+
   // Create a message object with the configuration data
   const configData = {
-    model: modelSelect,
-    instructions: userPrompt,
+    userModel: modelSelect,
+    userInstructions: userPrompt,
+    userApiKey: apiKey,
   };
 
   // Show the spinner and disable the button
