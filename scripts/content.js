@@ -4,32 +4,121 @@ let websiteContext = null;
 /// MAIN EVENT LISTENERS ///
 
 window.onload = function () {
-  try {
-    const metaTags = document.getElementsByTagName("meta");
-    const titleTags = document.getElementsByTagName("title");
+  let context = "";
 
-    // Ensure the metaTags and titleTags collections are non-empty
-    if (metaTags.length === 0) {
-      console.warn("No <meta> tags found on the page.");
-    }
-
-    if (titleTags.length === 0) {
-      console.warn("No <title> tags found on the page.");
-    }
-
-    // Combine meta and title tags into a single string
-    websiteContext =
-      Array.from(metaTags)
-        .map((tag) => tag.outerHTML)
-        .join("") +
-      Array.from(titleTags)
-        .map((tag) => tag.outerHTML)
-        .join("");
-
-    console.log("Website context initialized:", websiteContext);
-  } catch (error) {
-    console.error("Error during window.onload execution:", error);
+  // Helper function to truncate content if it exceeds the specified length
+  function truncateContent(content, maxLength) {
+    return content.length > maxLength
+      ? content.substring(0, maxLength)
+      : content;
   }
+
+  // Step 1: Gather and truncate text from the <title> tag
+  const titleTags = document.getElementsByTagName("title");
+  if (titleTags.length > 0) {
+    context += `Title: ${truncateContent(titleTags[0].textContent, 400)}\n\n`;
+  }
+
+  // Step 2: Gather and truncate text from <meta> tags (e.g., description)
+  const metaTags = document.getElementsByTagName("meta");
+  let hasMetaContent = false;
+  Array.from(metaTags).forEach((tag) => {
+    if (tag.getAttribute("name") === "description") {
+      context += `Meta Description: ${truncateContent(
+        tag.getAttribute("content"),
+        400
+      )}\n\n`;
+      hasMetaContent = true;
+    } else if (tag.getAttribute("property") === "og:description") {
+      context += `OG Meta Description: ${truncateContent(
+        tag.getAttribute("content"),
+        400
+      )}\n\n`;
+      hasMetaContent = true;
+    }
+  });
+
+  // Only add the meta section if there was any content
+  if (!hasMetaContent) {
+    context = context.replace("Meta Description:", "");
+    context = context.replace("OG Meta Description:", "");
+  }
+
+  // Step 3: Gather and truncate text from headings (h1, h2, h3, etc.)
+  const headings = document.querySelectorAll("h1, h2, h3, h4, h5, h6");
+  if (headings.length > 0) {
+    context += "Headings:\n";
+    Array.from(headings).forEach((heading) => {
+      context += `  - ${truncateContent(heading.textContent, 400)}\n`;
+    });
+    context += "\n";
+  }
+
+  // Step 4: Gather and truncate text from paragraphs
+  const paragraphs = document.querySelectorAll("p");
+  if (paragraphs.length > 0) {
+    context += "Paragraphs:\n";
+    Array.from(paragraphs).forEach((p) => {
+      context += `  - ${truncateContent(p.textContent, 400)}\n`;
+    });
+    context += "\n";
+  }
+
+  // Step 5: Gather and truncate text from list items
+  const listItems = document.querySelectorAll("ul li, ol li");
+  if (listItems.length > 0) {
+    context += "List Items:\n";
+    Array.from(listItems).forEach((li) => {
+      context += `  - ${truncateContent(li.textContent, 400)}\n`;
+    });
+    context += "\n";
+  }
+
+  // Step 6: Gather and truncate text from links (anchor text)
+  const links = document.querySelectorAll("a");
+  if (links.length > 0) {
+    context += "Links:\n";
+    Array.from(links).forEach((link) => {
+      if (link.textContent.trim()) {
+        // Ensure link has content
+        context += `  - ${truncateContent(link.textContent, 200)}\n`;
+      }
+    });
+    context += "\n";
+  }
+
+  // Step 7: Gather and truncate text from form inputs (input, textarea, select)
+  const inputs = document.querySelectorAll(
+    "input[type='text'], textarea, select"
+  );
+  if (inputs.length > 0) {
+    context += "Form Inputs:\n";
+    Array.from(inputs).forEach((input) => {
+      const value = input.value.trim();
+      if (value) {
+        // Only include inputs with content
+        context += `  - ${truncateContent(value, 400)}\n`;
+      }
+    });
+    context += "\n";
+  }
+
+  // Final output
+  console.log("Extracted Context:\n", context);
+
+  chrome.runtime.sendMessage(
+    {
+      type: "CONTEXT_UPDATE",
+      context: context,
+    },
+    (response) => {
+      if (response?.success) {
+        console.log("Successfully sent context to background script.");
+      } else {
+        console.error("Failed to send context to background script:", response);
+      }
+    }
+  );
 };
 
 // Detect when a textarea gains focus
@@ -57,7 +146,6 @@ document.addEventListener("focusin", (event) => {
         target.tagName === "INPUT" &&
         (target.type === "email" || target.type === "password")
       ) {
-        console.log("Skipping input type for privacy:", target.type);
         return;
       }
 
@@ -135,7 +223,6 @@ document.addEventListener("focusout", (event) => {
         try {
           currentTextarea.removeEventListener("input", currentHandler);
           currentHandler = null; // Reset the handler after removal
-          console.log("Removed input event listener successfully.");
         } catch (error) {
           console.error("Error removing input event listener:", error);
         }
@@ -200,7 +287,6 @@ function setupTextareaListener(textarea) {
               },
               (response) => {
                 if (response?.success && currentTextarea.suggestionOverlay) {
-                  console.log("received suggestion", response.result);
                   const suggestion = response.result; // e.g., "me is Bob."
 
                   // Build overlay content:

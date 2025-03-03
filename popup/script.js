@@ -8,8 +8,6 @@ document.getElementById("saveConfigBtn").addEventListener("click", () => {
   // get the api key from the input field
   const apiKey = document.getElementById("apiKey").value;
 
-  console.log("apiKey:", apiKey);
-
   // Create a message object with the configuration data
   const configData = {
     userModel: modelSelect,
@@ -27,8 +25,6 @@ document.getElementById("saveConfigBtn").addEventListener("click", () => {
   chrome.runtime.sendMessage(
     { type: "CONFIG", data: configData },
     (response) => {
-      console.log("Response from service worker:", response);
-
       // Hide the spinner and re-enable the button
       spinner.classList.add("hidden"); // Hide the spinner
       button.disabled = false; // Re-enable the button
@@ -52,8 +48,6 @@ document
     chrome.runtime.sendMessage(
       { type: "RESTORE_DEFAULT_CONFIG" },
       (response) => {
-        console.log("Response from service worker:", response);
-
         // Hide the spinner and re-enable the button
         spinner.classList.add("hidden"); // Hide the spinner
         button.disabled = false; // Re-enable the button
